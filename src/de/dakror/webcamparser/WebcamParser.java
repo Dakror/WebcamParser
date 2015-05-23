@@ -1,3 +1,20 @@
+/*******************************************************************************
+ * Copyright 2015 Maximilian Stark | Dakror <mail@dakror.de>
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+ 
+
 package de.dakror.webcamparser;
 
 import java.awt.Dimension;
@@ -5,23 +22,11 @@ import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.Collections;
-import java.util.Set;
 
-import javax.sound.sampled.AudioInputStream;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-
-import marytts.LocalMaryInterface;
-import marytts.MaryInterface;
-import marytts.util.data.audio.AudioPlayer;
-import net.sourceforge.tess4j.Tesseract;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 
 import com.github.sarxos.webcam.Webcam;
 import com.sun.glass.events.KeyEvent;
@@ -32,23 +37,10 @@ import com.sun.glass.events.KeyEvent;
 public class WebcamParser {
 	static BufferedImage image;
 	
-	static MaryInterface marytts;
-	
-	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
 		new File("img").mkdir();
 		
-		for (Logger l : Collections.<Logger> list(LogManager.getCurrentLoggers())) {
-			l.setLevel(Level.OFF);
-		}
-		
-		LogManager.getRootLogger().setLevel(Level.OFF);
-		
-		marytts = new LocalMaryInterface();
-		
-		Set<String> voices = marytts.getAvailableVoices();
-		System.out.println(voices);
-		marytts.setVoice("bits3-hsmm");
+		Reader.init();
 		
 		JFrame f = new JFrame();
 		
@@ -59,7 +51,7 @@ public class WebcamParser {
 			public void actionPerformed(ActionEvent e) {
 				if (image != null) {
 					try {
-						parse(image);
+						Reader.parse(image);
 					} catch (Exception e1) {
 						e1.printStackTrace();
 					}
@@ -89,25 +81,6 @@ public class WebcamParser {
 			button.setOpaque(true);
 			f.pack();
 		}
-	}
-	
-	public static void parse(BufferedImage image) throws Exception {
-		Tesseract tesseract = Tesseract.getInstance();
-		tesseract.setLanguage("deu");
-		
-		// ImageIO.write(image, "PNG", new File("img/" + System.currentTimeMillis() + ".png"));
-		
-		String text = tesseract.doOCR(image).trim();
-		
-		text = text.replaceAll("[^\\w\n.,;!?\'\":»«„”\\(\\) ]", "");
-		
-		System.out.println(text);
-		
-		AudioInputStream audio = marytts.generateAudio(text.length() > 0 ? text : "Ich kann das leider nicht lesen.");
-		
-		AudioPlayer player = new AudioPlayer(audio);
-		player.start();
-		player.join();
 	}
 	
 	public static BufferedImage horizontalflip(BufferedImage img) {
